@@ -55,8 +55,8 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1117;color:#e0e0e0;min-heig
 <h1>⚡ ADVISOR BRAIN</h1>
 <p>Macro-to-Portfolio Thinking System | Decision Support Only</p>
 <div class="nav">
-<button class="nav-btn active" onclick="showPage('dss')">🧠 DSS</button>
-<button class="nav-btn" onclick="showPage('analytics')">📊 Analytics</button>
+<button class="nav-btn active" id="btn-dss" onclick="showPage('dss',this)">🧠 DSS</button>
+<button class="nav-btn" id="btn-analytics" onclick="showPage('analytics',this)">📊 Analytics</button>
 </div>
 </div>
 
@@ -213,8 +213,8 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1117;color:#e0e0e0;min-heig
 </div>
 
 <script>
-// ─── ANALYTICS ENGINE ───────────────────────────────────────
 const STORAGE_KEY = 'advisorbrain_analytics';
+const SESSION_KEY = 'advisorbrain_session';
 
 function getAnalytics() {
   try {
@@ -229,15 +229,21 @@ function saveAnalytics(data) {
 }
 
 function logSession() {
+  // Only log one session per browser tab open
+  if (sessionStorage.getItem(SESSION_KEY)) return;
+  sessionStorage.setItem(SESSION_KEY, '1');
+
   const data = getAnalytics();
   const now = new Date().toISOString();
   if (!data.firstVisit) data.firstVisit = now;
+  if (!data.sessions) data.sessions = [];
   data.sessions.push({ time: now });
   saveAnalytics(data);
 }
 
 function logAnalysis(scenario) {
   const data = getAnalytics();
+  if (!data.events) data.events = [];
   data.events.push({
     time: new Date().toISOString(),
     scenario: scenario
@@ -247,33 +253,36 @@ function logAnalysis(scenario) {
 
 function formatDate(iso) {
   if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+  return new Date(iso).toLocaleDateString('en-IN', {
+    day:'numeric', month:'short', year:'numeric'
+  });
 }
 
 function formatTime(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
-  return d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }) +
-    ' · ' + d.toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+  return d.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) +
+    ' · ' + d.toLocaleDateString('en-IN', {day:'numeric', month:'short'});
 }
 
 function calcStreak(events) {
-  if (!events.length) return 0;
+  if (!events || !events.length) return 0;
   const days = [...new Set(events.map(e => e.time.slice(0,10)))].sort().reverse();
+  const today = new Date().toISOString().slice(0,10);
+  if (days[0] !== today) return 0;
   let streak = 1;
   for (let i = 1; i < days.length; i++) {
     const prev = new Date(days[i-1]);
     const curr = new Date(days[i]);
     const diff = (prev - curr) / (1000*60*60*24);
-    if (diff === 1) streak++;
+    if (Math.round(diff) === 1) streak++;
     else break;
   }
   return streak;
 }
 
 function getMostUsedScenario(events) {
-  if (!events.length) return '—';
+  if (!events || !events.length) return '—';
   const counts = {};
   events.forEach(e => {
     const key = e.scenario || 'Unknown';
@@ -283,14 +292,13 @@ function getMostUsedScenario(events) {
 }
 
 function getReturnRate(sessions) {
-  if (sessions.length < 2) return 'Need more visits';
+  if (!sessions || sessions.length < 2) return 'Need more visits';
   const first = new Date(sessions[0].time);
   const returned = sessions.slice(1).filter(s => {
     const diff = (new Date(s.time) - first) / (1000*60*60*24);
     return diff <= 14;
   });
-  const rate = Math.round((returned.length / (sessions.length - 1)) * 100);
-  return rate + '%';
+  return Math.round((returned.length / (sessions.length - 1)) * 100) + '%';
 }
 
 function renderAnalytics() {
@@ -298,8 +306,9 @@ function renderAnalytics() {
   const events = data.events || [];
   const sessions = data.sessions || [];
   const today = new Date().toISOString().slice(0,10);
-  const todayEvents = events.filter(e => e.time.startsWith(today));
   const thisMonth = new Date().toISOString().slice(0,7);
+
+  const todayEvents = events.filter(e => e.time.startsWith(today));
   const monthSessions = sessions.filter(s => s.time.startsWith(thisMonth));
   const avg = sessions.length ? (events.length / sessions.length).toFixed(1) : '—';
   const returnRate = getReturnRate(sessions);
@@ -321,8 +330,7 @@ function renderAnalytics() {
   if (!events.length) {
     recentEl.innerHTML = '<p style="color:#555;font-size:13px;">No analyses yet.</p>';
   } else {
-    const recent = events.slice(-8).reverse();
-    recentEl.innerHTML = recent.map(e => `
+    recentEl.innerHTML = events.slice(-8).reverse().map(e => `
       <div class="event-row">
         <span class="event-label">🧠 ${e.scenario || 'Analysis run'}</span>
         <span class="event-time">${formatTime(e.time)}</span>
@@ -334,20 +342,19 @@ function renderAnalytics() {
 function resetAnalytics() {
   if (confirm('Reset all analytics data? This cannot be undone.')) {
     localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(SESSION_KEY);
     renderAnalytics();
   }
 }
 
-// ─── NAVIGATION ─────────────────────────────────────────────
-function showPage(page) {
+function showPage(page, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
-  event.target.classList.add('active');
+  btn.classList.add('active');
   if (page === 'analytics') renderAnalytics();
 }
 
-// ─── MARKDOWN CLEANER ────────────────────────────────────────
 function cleanMarkdown(text) {
   return text
     .replace(/\*\*(.*?)\*\*/g, '$1')
@@ -357,7 +364,6 @@ function cleanMarkdown(text) {
     .trim();
 }
 
-// ─── MAIN ANALYZE ────────────────────────────────────────────
 async function analyze() {
   const btn = document.getElementById('analyzeBtn');
   const loading = document.getElementById('loading');
@@ -453,7 +459,7 @@ function renderOutput(s) {
   `;
 }
 
-// ─── INIT ────────────────────────────────────────────────────
+// INIT
 logSession();
 </script>
 </body>
