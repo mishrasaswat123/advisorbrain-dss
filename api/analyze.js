@@ -6,7 +6,13 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { interestRates, liquidity, crudeOil, fiiFlows } = req.body;
+    let body = req.body;
+    if (typeof body === 'string') body = JSON.parse(body);
+    const { interestRates, liquidity, crudeOil, fiiFlows } = body;
+
+    if (!interestRates || !liquidity || !crudeOil || !fiiFlows) {
+      return res.status(400).json({ error: 'Missing input fields' });
+    }
 
     const prompt = `You are Advisor Brain — a macro-to-portfolio thinking system for serious investors.
 
@@ -38,7 +44,7 @@ State one of: Emerging / Building / Strong. Add one sentence of reasoning.
 
 Important rules:
 - Never recommend specific stocks
-- Never give exact allocation percentages  
+- Never give exact allocation percentages
 - Never say "I recommend" — say "macro conditions suggest" or "positioning bias favours"
 - Always include the disclaimer: This output is for macro interpretation only and does not constitute financial advice.`;
 
@@ -56,11 +62,16 @@ Important rules:
       })
     });
 
+    if (!response.ok) {
+      const errData = await response.json();
+      return res.status(500).json({ error: `API error: ${errData.error?.message || 'Unknown'}` });
+    }
+
     const data = await response.json();
     const output = data.content[0].text;
     return res.status(200).json({ output });
 
   } catch (error) {
-    return res.status(500).json({ error: 'Analysis failed. Please try again.' });
+    return res.status(500).json({ error: error.message });
   }
 }
