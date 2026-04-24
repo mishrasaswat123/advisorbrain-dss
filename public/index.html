@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advisor Brain DSS</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',sans-serif;background:#0f1117;color:#e0e0e0;min-height:100vh;}
+.header{background:linear-gradient(135deg,#1a1f2e,#0d1117);padding:24px;border-bottom:1px solid #2a2f3e;text-align:center;}
+.header h1{font-size:24px;color:#7c9ff5;letter-spacing:1px;}
+.header p{font-size:12px;color:#888;margin-top:4px;}
+.container{max-width:900px;margin:0 auto;padding:24px 16px;}
+.input-card{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:12px;padding:24px;margin-bottom:24px;}
+.input-card h2{font-size:14px;color:#7c9ff5;margin-bottom:16px;text-transform:uppercase;letter-spacing:1px;}
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.input-group label{display:block;font-size:12px;color:#888;margin-bottom:6px;}
+.input-group select{width:100%;background:#0f1117;border:1px solid #2a2f3e;border-radius:8px;padding:10px;color:#e0e0e0;font-size:14px;}
+.btn{width:100%;background:linear-gradient(135deg,#3b5bdb,#7c9ff5);border:none;border-radius:8px;padding:14px;color:white;font-size:16px;font-weight:600;cursor:pointer;margin-top:16px;}
+.btn:disabled{opacity:0.5;}
+.disclaimer{background:#1a1208;border:1px solid #3d2b00;border-radius:8px;padding:12px;margin-bottom:24px;font-size:12px;color:#f0a500;display:none;}
+.output-section{display:none;}
+.output-card{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:12px;padding:20px;margin-bottom:16px;}
+.output-card h3{font-size:12px;color:#7c9ff5;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #2a2f3e;}
+.output-card p{font-size:14px;line-height:1.7;color:#c0c0c0;white-space:pre-wrap;}
+.conviction-badge{display:inline-block;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:1px;}
+.loading{text-align:center;padding:40px;display:none;}
+.spinner{width:40px;height:40px;border:3px solid #2a2f3e;border-top:3px solid #7c9ff5;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@media(max-width:600px){.input-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>⚡ ADVISOR BRAIN</h1>
+<p>Macro-to-Portfolio Thinking System | Decision Support Only</p>
+</div>
+<div class="container">
+<div class="input-card">
+<h2>📊 Macro Environment Inputs</h2>
+<div class="input-grid">
+<div class="input-group">
+<label>Interest Rates</label>
+<select id="interestRates">
+<option value="Rising sharply">Rising Sharply</option>
+<option value="Rising gradually">Rising Gradually</option>
+<option value="Stable" selected>Stable</option>
+<option value="Falling gradually">Falling Gradually</option>
+<option value="Falling sharply">Falling Sharply</option>
+</select>
+</div>
+<div class="input-group">
+<label>Liquidity Conditions</label>
+<select id="liquidity">
+<option value="Very tight">Very Tight</option>
+<option value="Tight">Tight</option>
+<option value="Neutral" selected>Neutral</option>
+<option value="Supportive">Supportive</option>
+<option value="Very supportive">Very Supportive</option>
+</select>
+</div>
+<div class="input-group">
+<label>Crude Oil Trend</label>
+<select id="crudeOil">
+<option value="Surging above $90">Surging Above $90</option>
+<option value="Elevated $75-90">Elevated $75-90</option>
+<option value="Moderate $60-75" selected>Moderate $60-75</option>
+<option value="Falling $45-60">Falling $45-60</option>
+<option value="Low below $45">Low Below $45</option>
+</select>
+</div>
+<div class="input-group">
+<label>FII Flows</label>
+<select id="fiiFlows">
+<option value="Heavy selling">Heavy Selling</option>
+<option value="Moderate selling">Moderate Selling</option>
+<option value="Neutral" selected>Neutral</option>
+<option value="Moderate buying">Moderate Buying</option>
+<option value="Heavy buying">Heavy Buying</option>
+</select>
+</div>
+</div>
+<button class="btn" id="analyzeBtn" onclick="analyze()">🧠 Generate Macro Analysis</button>
+</div>
+
+<div class="disclaimer" id="disclaimer">
+⚠️ This tool provides macro interpretation only. It does not constitute financial advice. All outputs are illustrative scenarios, not recommendations.
+</div>
+
+<div class="loading" id="loading">
+<div class="spinner"></div>
+<p style="color:#888;font-size:14px;">Advisor Brain is thinking...</p>
+</div>
+
+<div class="output-section" id="outputSection"></div>
+</div>
+
+<script>
+async function analyze() {
+  const btn = document.getElementById('analyzeBtn');
+  const loading = document.getElementById('loading');
+  const outputSection = document.getElementById('outputSection');
+  const disclaimer = document.getElementById('disclaimer');
+
+  btn.disabled = true;
+  loading.style.display = 'block';
+  outputSection.style.display = 'none';
+  disclaimer.style.display = 'none';
+
+  const payload = {
+    interestRates: document.getElementById('interestRates').value,
+    liquidity: document.getElementById('liquidity').value,
+    crudeOil: document.getElementById('crudeOil').value,
+    fiiFlows: document.getElementById('fiiFlows').value
+  };
+
+  try {
+    const response = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+
+    const text = data.output;
+    const sections = parseOutput(text);
+    renderOutput(sections);
+
+    disclaimer.style.display = 'block';
+    outputSection.style.display = 'block';
+  } catch (err) {
+    outputSection.innerHTML = `<div class="output-card"><p style="color:#ff6b6b;">Error: ${err.message}. Please try again.</p></div>`;
+    outputSection.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    loading.style.display = 'none';
+  }
+}
+
+function parseOutput(text) {
+  const sections = {};
+  const patterns = [
+    {key:'context', regex:/1\.\s*MARKET CONTEXT([\s\S]*?)(?=2\.|$)/i},
+    {key:'interpretation', regex:/2\.\s*ADVISOR INTERPRETATION([\s\S]*?)(?=3\.|$)/i},
+    {key:'positioning', regex:/3\.\s*STRATEGIC POSITIONING VIEW([\s\S]*?)(?=4\.|$)/i},
+    {key:'lens', regex:/4\.\s*PORTFOLIO LENS([\s\S]*?)(?=5\.|$)/i},
+    {key:'risk', regex:/5\.\s*RISK TO VIEW([\s\S]*?)(?=6\.|$)/i},
+    {key:'conviction', regex:/6\.\s*CONVICTION LEVEL([\s\S]*?)$/i}
+  ];
+  patterns.forEach(p => {
+    const match = text.match(p.regex);
+    sections[p.key] = match ? match[1].trim() : '';
+  });
+  return sections;
+}
+
+function getConvictionColor(text) {
+  if (text.toLowerCase().includes('strong')) return '#00c853';
+  if (text.toLowerCase().includes('building')) return '#f0a500';
+  return '#7c9ff5';
+}
+
+function renderOutput(s) {
+  const convColor = getConvictionColor(s.conviction);
+  document.getElementById('outputSection').innerHTML = `
+    <div class="output-card">
+      <h3>🌐 Market Context</h3>
+      <p>${s.context}</p>
+    </div>
+    <div class="output-card">
+      <h3>🧠 Advisor Interpretation</h3>
+      <p>${s.interpretation}</p>
+    </div>
+    <div class="output-card">
+      <h3>📊 Strategic Positioning View</h3>
+      <p>${s.positioning}</p>
+    </div>
+    <div class="output-card">
+      <h3>🔍 Portfolio Lens</h3>
+      <p>${s.lens}</p>
+    </div>
+    <div class="output-card">
+      <h3>⚠️ Risk to View</h3>
+      <p>${s.risk}</p>
+    </div>
+    <div class="output-card">
+      <h3>🎯 Conviction Level</h3>
+      <span class="conviction-badge" style="background:${convColor}22;color:${convColor};border:1px solid ${convColor}">${s.conviction}</span>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
