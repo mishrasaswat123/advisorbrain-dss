@@ -10,7 +10,12 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1117;color:#e0e0e0;min-heig
 .header{background:linear-gradient(135deg,#1a1f2e,#0d1117);padding:24px;border-bottom:1px solid #2a2f3e;text-align:center;}
 .header h1{font-size:24px;color:#7c9ff5;letter-spacing:1px;}
 .header p{font-size:12px;color:#888;margin-top:4px;}
+.nav{display:flex;gap:8px;justify-content:center;margin-top:16px;}
+.nav-btn{padding:6px 16px;border-radius:20px;border:1px solid #2a2f3e;background:transparent;color:#888;font-size:12px;cursor:pointer;}
+.nav-btn.active{background:#7c9ff5;color:#0f1117;border-color:#7c9ff5;font-weight:600;}
 .container{max-width:900px;margin:0 auto;padding:24px 16px;}
+.page{display:none;}
+.page.active{display:block;}
 .input-card{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:12px;padding:24px;margin-bottom:24px;}
 .input-card h2{font-size:14px;color:#7c9ff5;margin-bottom:16px;text-transform:uppercase;letter-spacing:1px;}
 .input-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
@@ -27,15 +32,38 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1117;color:#e0e0e0;min-heig
 .loading{text-align:center;padding:40px;display:none;}
 .spinner{width:40px;height:40px;border:3px solid #2a2f3e;border-top:3px solid #7c9ff5;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;}
 @keyframes spin{to{transform:rotate(360deg);}}
-@media(max-width:600px){.input-grid{grid-template-columns:1fr;}}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.stat-card{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:12px;padding:20px;text-align:center;}
+.stat-number{font-size:36px;font-weight:700;color:#7c9ff5;}
+.stat-label{font-size:12px;color:#888;margin-top:4px;}
+.stat-sublabel{font-size:11px;color:#555;margin-top:2px;}
+.analytics-card{background:#1a1f2e;border:1px solid #2a2f3e;border-radius:12px;padding:20px;margin-bottom:16px;}
+.analytics-card h3{font-size:12px;color:#7c9ff5;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #2a2f3e;}
+.event-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1a1f2e;}
+.event-row:last-child{border-bottom:none;}
+.event-label{font-size:13px;color:#c0c0c0;}
+.event-time{font-size:11px;color:#555;}
+.metric-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;}
+.metric-label{font-size:13px;color:#888;}
+.metric-value{font-size:13px;color:#7c9ff5;font-weight:600;}
+.reset-btn{width:100%;background:transparent;border:1px solid #ff6b6b;border-radius:8px;padding:10px;color:#ff6b6b;font-size:13px;cursor:pointer;margin-top:8px;}
+@media(max-width:600px){.input-grid{grid-template-columns:1fr;}.stat-grid{grid-template-columns:1fr 1fr;}}
 </style>
 </head>
 <body>
 <div class="header">
 <h1>⚡ ADVISOR BRAIN</h1>
 <p>Macro-to-Portfolio Thinking System | Decision Support Only</p>
+<div class="nav">
+<button class="nav-btn active" onclick="showPage('dss')">🧠 DSS</button>
+<button class="nav-btn" onclick="showPage('analytics')">📊 Analytics</button>
 </div>
+</div>
+
 <div class="container">
+
+<!-- DSS PAGE -->
+<div class="page active" id="page-dss">
 <div class="input-card">
 <h2>📊 Macro Environment Inputs</h2>
 <div class="input-grid">
@@ -95,7 +123,231 @@ body{font-family:'Segoe UI',sans-serif;background:#0f1117;color:#e0e0e0;min-heig
 <div class="output-section" id="outputSection"></div>
 </div>
 
+<!-- ANALYTICS PAGE -->
+<div class="page" id="page-analytics">
+<div class="stat-grid">
+<div class="stat-card">
+<div class="stat-number" id="stat-total">0</div>
+<div class="stat-label">Total Analyses</div>
+<div class="stat-sublabel">All time</div>
+</div>
+<div class="stat-card">
+<div class="stat-number" id="stat-today">0</div>
+<div class="stat-label">Today</div>
+<div class="stat-sublabel">Analyses run</div>
+</div>
+<div class="stat-card">
+<div class="stat-number" id="stat-sessions">0</div>
+<div class="stat-label">Sessions</div>
+<div class="stat-sublabel">Total visits</div>
+</div>
+<div class="stat-card">
+<div class="stat-number" id="stat-streak">0</div>
+<div class="stat-label">Day Streak</div>
+<div class="stat-sublabel">Consecutive days</div>
+</div>
+</div>
+
+<div class="analytics-card">
+<h3>📈 Usage Metrics</h3>
+<div class="metric-row">
+<span class="metric-label">First visit</span>
+<span class="metric-value" id="metric-first">—</span>
+</div>
+<div class="metric-row">
+<span class="metric-label">Last analysis</span>
+<span class="metric-value" id="metric-last">—</span>
+</div>
+<div class="metric-row">
+<span class="metric-label">Most used scenario</span>
+<span class="metric-value" id="metric-scenario">—</span>
+</div>
+<div class="metric-row">
+<span class="metric-label">Avg analyses/session</span>
+<span class="metric-value" id="metric-avg">—</span>
+</div>
+<div class="metric-row">
+<span class="metric-label">Return visit rate</span>
+<span class="metric-value" id="metric-return">—</span>
+</div>
+</div>
+
+<div class="analytics-card">
+<h3>🕐 Recent Activity</h3>
+<div id="recent-events">
+<p style="color:#555;font-size:13px;">No analyses yet. Run your first scenario.</p>
+</div>
+</div>
+
+<div class="analytics-card">
+<h3>🎯 Beta Target Tracker</h3>
+<div class="metric-row">
+<span class="metric-label">Sessions/month target</span>
+<span class="metric-value">&gt; 2 sessions</span>
+</div>
+<div class="metric-row">
+<span class="metric-label">Your sessions this month</span>
+<span class="metric-value" id="metric-month-sessions">—</span>
+</div>
+<div class="metric-row">
+<span class="metric-label">Analyses/session target</span>
+<span class="metric-value">&gt; 1 scenario</span>
+</div>
+<div class="metric-row">
+<span class="metric-label">Your avg analyses/session</span>
+<span class="metric-value" id="metric-avg2">—</span>
+</div>
+<div class="metric-row">
+<span class="metric-label">Return rate target</span>
+<span class="metric-value">&gt; 40% in 14 days</span>
+</div>
+<div class="metric-row">
+<span class="metric-label">Your return rate</span>
+<span class="metric-value" id="metric-return2">—</span>
+</div>
+</div>
+
+<button class="reset-btn" onclick="resetAnalytics()">🗑 Reset Analytics Data</button>
+</div>
+
+</div>
+
 <script>
+// ─── ANALYTICS ENGINE ───────────────────────────────────────
+const STORAGE_KEY = 'advisorbrain_analytics';
+
+function getAnalytics() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+      events: [], sessions: [], firstVisit: null
+    };
+  } catch(e) { return { events: [], sessions: [], firstVisit: null }; }
+}
+
+function saveAnalytics(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function logSession() {
+  const data = getAnalytics();
+  const now = new Date().toISOString();
+  if (!data.firstVisit) data.firstVisit = now;
+  data.sessions.push({ time: now });
+  saveAnalytics(data);
+}
+
+function logAnalysis(scenario) {
+  const data = getAnalytics();
+  data.events.push({
+    time: new Date().toISOString(),
+    scenario: scenario
+  });
+  saveAnalytics(data);
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function formatTime(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }) +
+    ' · ' + d.toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+}
+
+function calcStreak(events) {
+  if (!events.length) return 0;
+  const days = [...new Set(events.map(e => e.time.slice(0,10)))].sort().reverse();
+  let streak = 1;
+  for (let i = 1; i < days.length; i++) {
+    const prev = new Date(days[i-1]);
+    const curr = new Date(days[i]);
+    const diff = (prev - curr) / (1000*60*60*24);
+    if (diff === 1) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function getMostUsedScenario(events) {
+  if (!events.length) return '—';
+  const counts = {};
+  events.forEach(e => {
+    const key = e.scenario || 'Unknown';
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  return Object.entries(counts).sort((a,b) => b[1]-a[1])[0][0];
+}
+
+function getReturnRate(sessions) {
+  if (sessions.length < 2) return 'Need more visits';
+  const first = new Date(sessions[0].time);
+  const returned = sessions.slice(1).filter(s => {
+    const diff = (new Date(s.time) - first) / (1000*60*60*24);
+    return diff <= 14;
+  });
+  const rate = Math.round((returned.length / (sessions.length - 1)) * 100);
+  return rate + '%';
+}
+
+function renderAnalytics() {
+  const data = getAnalytics();
+  const events = data.events || [];
+  const sessions = data.sessions || [];
+  const today = new Date().toISOString().slice(0,10);
+  const todayEvents = events.filter(e => e.time.startsWith(today));
+  const thisMonth = new Date().toISOString().slice(0,7);
+  const monthSessions = sessions.filter(s => s.time.startsWith(thisMonth));
+  const avg = sessions.length ? (events.length / sessions.length).toFixed(1) : '—';
+  const returnRate = getReturnRate(sessions);
+
+  document.getElementById('stat-total').textContent = events.length;
+  document.getElementById('stat-today').textContent = todayEvents.length;
+  document.getElementById('stat-sessions').textContent = sessions.length;
+  document.getElementById('stat-streak').textContent = calcStreak(events);
+  document.getElementById('metric-first').textContent = formatDate(data.firstVisit);
+  document.getElementById('metric-last').textContent = events.length ? formatTime(events[events.length-1].time) : '—';
+  document.getElementById('metric-scenario').textContent = getMostUsedScenario(events);
+  document.getElementById('metric-avg').textContent = avg;
+  document.getElementById('metric-return').textContent = returnRate;
+  document.getElementById('metric-month-sessions').textContent = monthSessions.length;
+  document.getElementById('metric-avg2').textContent = avg;
+  document.getElementById('metric-return2').textContent = returnRate;
+
+  const recentEl = document.getElementById('recent-events');
+  if (!events.length) {
+    recentEl.innerHTML = '<p style="color:#555;font-size:13px;">No analyses yet.</p>';
+  } else {
+    const recent = events.slice(-8).reverse();
+    recentEl.innerHTML = recent.map(e => `
+      <div class="event-row">
+        <span class="event-label">🧠 ${e.scenario || 'Analysis run'}</span>
+        <span class="event-time">${formatTime(e.time)}</span>
+      </div>
+    `).join('');
+  }
+}
+
+function resetAnalytics() {
+  if (confirm('Reset all analytics data? This cannot be undone.')) {
+    localStorage.removeItem(STORAGE_KEY);
+    renderAnalytics();
+  }
+}
+
+// ─── NAVIGATION ─────────────────────────────────────────────
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  event.target.classList.add('active');
+  if (page === 'analytics') renderAnalytics();
+}
+
+// ─── MARKDOWN CLEANER ────────────────────────────────────────
 function cleanMarkdown(text) {
   return text
     .replace(/\*\*(.*?)\*\*/g, '$1')
@@ -105,6 +357,7 @@ function cleanMarkdown(text) {
     .trim();
 }
 
+// ─── MAIN ANALYZE ────────────────────────────────────────────
 async function analyze() {
   const btn = document.getElementById('analyzeBtn');
   const loading = document.getElementById('loading');
@@ -116,23 +369,23 @@ async function analyze() {
   outputSection.style.display = 'none';
   disclaimer.style.display = 'none';
 
-  const payload = {
-    interestRates: document.getElementById('interestRates').value,
-    liquidity: document.getElementById('liquidity').value,
-    crudeOil: document.getElementById('crudeOil').value,
-    fiiFlows: document.getElementById('fiiFlows').value
-  };
+  const ir = document.getElementById('interestRates').value;
+  const lq = document.getElementById('liquidity').value;
+  const co = document.getElementById('crudeOil').value;
+  const fi = document.getElementById('fiiFlows').value;
+  const scenarioLabel = `IR:${ir.split(' ')[0]} | LQ:${lq} | Oil:${co.split(' ')[0]} | FII:${fi}`;
 
   try {
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ interestRates:ir, liquidity:lq, crudeOil:co, fiiFlows:fi })
     });
 
     const data = await response.json();
     if (data.error) throw new Error(data.error);
 
+    logAnalysis(scenarioLabel);
     const sections = parseOutput(data.output);
     renderOutput(sections);
 
@@ -199,6 +452,9 @@ function renderOutput(s) {
     </div>
   `;
 }
+
+// ─── INIT ────────────────────────────────────────────────────
+logSession();
 </script>
 </body>
 </html>
