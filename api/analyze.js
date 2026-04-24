@@ -48,27 +48,24 @@ Important rules:
 - Never say "I recommend" — say "macro conditions suggest" or "positioning bias favours"
 - Always include the disclaimer: This output is for macro interpretation only and does not constitute financial advice.`;
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
+
+    const response = await fetch(geminiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1500,
-        messages: [{ role: 'user', content: prompt }]
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: 1500, temperature: 0.7 }
       })
     });
 
     if (!response.ok) {
       const errData = await response.json();
-      return res.status(500).json({ error: `API error: ${errData.error?.message || 'Unknown'}` });
+      return res.status(500).json({ error: `Gemini error: ${errData.error?.message || 'Unknown'}` });
     }
 
     const data = await response.json();
-    const output = data.content[0].text;
+    const output = data.candidates[0].content.parts[0].text;
     return res.status(200).json({ output });
 
   } catch (error) {
